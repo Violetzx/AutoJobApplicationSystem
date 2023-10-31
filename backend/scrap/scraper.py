@@ -9,9 +9,6 @@ import os
 import sys
 import logging
 
-sys.path.append(os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), "../..")))
-
-import configs
 
 
 async def browserAndScrape(browser, title: str, location: str, path: str, thread: int):
@@ -51,15 +48,15 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
     # top filter element
     top_filter_l = page.locator("#choice_box_root")
     # 筛选发布日期
-    if configs.APP_SCRAPER_OPTIONS_DATE_POSTED_TEXT != configs.APP_SCRAPER_OPTIONS_DATE_POSTED_DAYS_RULES["default"]:
-        date_posted_el = top_filter_l.locator('[role="tablist"]').locator("text=Date posted")
-        if date_posted_el:
-            await date_posted_el.click()
-            await page.wait_for_timeout(2_000)
-            date_posted_days_el = top_filter_l.locator(f"text={configs.APP_SCRAPER_OPTIONS_DATE_POSTED_TEXT}")
-            if date_posted_days_el:
-                await date_posted_days_el.click()
-                await page.wait_for_timeout(3_000)
+    # if configs.APP_SCRAPER_OPTIONS_DATE_POSTED_TEXT != configs.APP_SCRAPER_OPTIONS_DATE_POSTED_DAYS_RULES["default"]:
+    # date_posted_el = top_filter_l.locator('[role="tablist"]').locator("text=Date posted")
+    if True:
+        # await date_posted_el.click()
+        # await page.wait_for_timeout(2_000)
+        # date_posted_days_el = top_filter_l.locator('text="Past 3 days"')
+        if True:
+            # await date_posted_days_el.click()
+            await page.wait_for_timeout(3_000)
     # scrape Google Search左侧scroll view的数据, Google的scroll view上限是150条职位数据
     while True:
         job_groups = page.locator(".lteri .zxU94d li")
@@ -163,16 +160,19 @@ async def main():
     logger.addHandler(file_handler)  # add file handler to logger
     # 读取今日的时间
     today = date.today()
-    d = today.strftime(configs.APP_SCRAPER_DATE_FOLDER_FORMAT)
+    d = today.strftime("%b-%d-%Y")
+    # d = today.strftime(configs.APP_SCRAPER_DATE_FOLDER_FORMAT)
     # 获取职位和城市地点，input_data.json为12职位*8地点，small_data.json为1职位*1地点为测试数据
     # 开发环境下使用small_data.json
-    with open(
-        os.path.join(configs.APP_SCRAPER_SERVICE_DATA, "small_data.json" if configs.APP_IS_DEV else "input_data.json"),
-        "r",
-    ) as file:
-        data = json.load(file)
-    title = data["title"]
-    location = data["location"]
+    # with open(
+    #     os.path.join(configs.APP_SCRAPER_SERVICE_DATA, "small_data.json" if configs.APP_IS_DEV else "input_data.json"),
+    #     "r",
+    # ) as file:
+    #     data = json.load(file)
+    # title = data["title"]
+    # location = data["location"]
+    title = "Software Engineer"
+    location = "Los Angeles"
 
     for t in title:
         location_length = len(location)
@@ -180,7 +180,7 @@ async def main():
         thread_number = 1
         length_of_thread = location_length // thread_number
         for location_index in tqdm(range(length_of_thread)):
-            path = os.path.join(configs.APP_SCRAPER_RAW_DATA, d)
+            path = os.path.join("../../data", d)
             tasks = list()
             async with async_playwright() as pw:
                 browser = await pw.chromium.launch(channel="chrome", headless=True)
