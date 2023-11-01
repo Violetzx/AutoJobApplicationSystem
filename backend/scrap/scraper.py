@@ -123,10 +123,11 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
         random1 = random.randint(100, 300)
         await logo.click(timeout=2000, delay=random1)
         right_panel = await page.query_selector(".lteri > .whazf >.jolnDe > div > .KGjGe >.pE8vnd")
-        link_el = await right_panel.query_selector(" g-scrolling-carousel > div > .EDblX > .B8oxKe > .DaDV9e > .pMhGee")
+
+        link_el = await right_panel.query_selector("g-scrolling-carousel > div > .EDblX > span > .B8oxKe > span > .pMhGee")
         job["links"] = [await link_el.get_attribute("href")]
         link_extra_el = await right_panel.query_selector(
-            " g-scrolling-carousel > div > .EDblX > span > .BQC79e > div > .xXyUwe"
+            " g-scrolling-carousel > div > .EDblX > span > .B8oxKe"
         )
         if link_extra_el:
             extra_links = await link_extra_el.query_selector_all("span")
@@ -134,6 +135,7 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
                 res = await link.query_selector("a")
                 if res:
                     job["links"].append(await res.get_attribute("href"))
+        job["links"].pop(0)
         description_1_el = await right_panel.query_selector(".YgLbBe > div > .HBvzbc")
         if not description_1_el:
             continue
@@ -171,8 +173,8 @@ async def main():
     #     data = json.load(file)
     # title = data["title"]
     # location = data["location"]
-    title = "Software Engineer"
-    location = "Los Angeles"
+    title = ["Software Engineer"]
+    location = ["Los Angeles"]
 
     for t in title:
         location_length = len(location)
