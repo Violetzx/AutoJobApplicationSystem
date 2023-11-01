@@ -10,7 +10,7 @@ import sys
 import logging
 
 
-
+print("hello world")
 async def browserAndScrape(browser, title: str, location: str, path: str, thread: int):
     """
     Scrape data from Google Jobs website with search query
