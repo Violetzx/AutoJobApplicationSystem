@@ -1,0 +1,46 @@
+// src/components/NavBar.module.scss
+.navBar {
+  background-color: #23272a;
+  color: white;
+  padding: 10px 5%; // Use percentage for padding to be responsive
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    width: auto; // Let the width be auto so it takes up required space
+    justify-content: flex-end; // Push the nav items to the end
+
+    li {
+      margin: 0 10px;
+
+      a {
+        color: #7289da;
+        text-decoration: none;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: lighten(#7289da, 15%);
+        }
+      }
+    }
+  }
+
+  // Use media queries for adjustments on smaller screens if necessary
+  // @media (max-width: 768px) {
+  //   .navBar {
+  //     flex-direction: column;
+  //     align-items: flex-start; // Stack items vertically and align left
+  //   }
+
+  //   ul {
+  //     width: 100%; // Full width for small screens
+  //     flex-direction: column;
+  //     align-items: flex-start;
+  //   }
+  // }
+}

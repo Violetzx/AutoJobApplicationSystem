@@ -1,0 +1,98 @@
+// AdminViewForScraperInfo.module.scss
+
+$primary-color: #333;
+$hover-color: #555;
+$background-color: #fff;
+$hover-background-color: #f7f7f7;
+$border-color: #ddd;
+$loading-color: #666;
+
+.container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #fff;
+  font-family: 'Arial', sans-serif;
+  color: $primary-color;
+
+  h1 {
+    border-bottom: 1px solid $border-color;
+    padding-bottom: 10px;
+  }
+
+  .dateFolder {
+    margin-top: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    padding: 10px;
+    position: relative;
+    padding: 10px;
+  }
+
+  .fileItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .fileLink:hover{
+    color: #007bff;
+  }
+
+  .deleteButton {
+    background-color: transparent; // Ensures the button has no background
+    border: none; // Removes any default border
+    cursor: pointer; // Changes the mouse cursor to signify it's clickable
+    display: inline-flex; // Keeps the button inline but also allows flexbox properties
+    align-items: center; // Centers the icon vertically
+    padding: 5px; // Adds some space around the icon
+    border-radius: 50%; // Makes the border rounded into a circle shape
+    border: 2px solid white; // A blue border on hover
+
+    svg {
+      // Directly style the SVG inside the button, if necessary
+      stroke: currentColor; // Allows the icon's color to be changed by the button's color
+    }
+  
+    &:hover {
+      background-color: #e0e0e0; // A light grey background on hover
+      border: 2px solid #007bff; // A blue border on hover
+  
+      svg {
+        stroke: #007bff; // Changes the icon's color to blue on hover
+      }
+    }
+  }
+  
+}
+
+.loading {
+  color: $loading-color;
+  text-align: center;
+  padding: 20px;
+}
