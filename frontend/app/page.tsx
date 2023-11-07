@@ -1,5 +1,6 @@
-
 import MainPage from "@/components/MainPage/MainPage.jsx"
+
+
 
 
 export const metadata = {
@@ -14,3 +15,6 @@ export default function Home() {
     </main>
   )
 }
+
+
+

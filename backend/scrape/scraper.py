@@ -9,13 +9,18 @@ import os
 import sys
 import logging
 
+
+from .cancellation_signal import CancellationSignal
+
+
+
 async def create_directory(path):
     try:
         os.makedirs(path, exist_ok=True)
     except FileNotFoundError as e:
         print(f"An error occurred while creating directory: {e}")
 
-async def browserAndScrape(browser, title: str, location: str, path: str, thread: int):
+async def browserAndScrape(browser, title: str, location: str, path: str, thread: int,cancellation_signal: CancellationSignal ):
     """
     Scrape data from Google Jobs website with search query
     Args:
@@ -63,6 +68,12 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
             await page.wait_for_timeout(3_000)
     # scrape Google Search左侧scroll view的数据, Google的scroll view上限是150条职位数据
     while True:
+        # Add a cancellation check
+        if cancellation_signal.is_cancelled():
+            print("Scraping cancelled!")
+            break
+
+
         job_groups = page.locator(".lteri .zxU94d li")
         groups_seen = len(await job_groups.element_handles())
         if groups_seen > 0:
@@ -78,7 +89,11 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
 
     all_items = await page.query_selector_all(".lteri .zxU94d li")
     c = 0
+
     for item in all_items:
+        if cancellation_signal.is_cancelled():
+            print("Scraping cancelled!")
+            break
         c += 1
         # if c == count:
         #     break
@@ -147,15 +162,23 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
         job["description"] = (await description_1_el.inner_text()) + (await description_2_el.inner_text())
         job["occupation"] = title
         jobs.append(job)
-    final_data = {"url": jobs_search_url, "jobs": jobs}
-    # 将数据储存到json，例子：software development_Los Angeles.json
-    if not os.path.exists(path):
-        os.mkdir(path)
-    with open(os.path.join(path, title + "_" + l + ".json"), "w") as file:
-        json.dump(final_data, file)
+    # Check if the scraping was not cancelled
+    if not cancellation_signal.is_cancelled():
+        # If it was not cancelled, write to the file
+        final_data = {"url": jobs_search_url, "jobs": jobs}
+        # 将数据储存到json，例子：software development_Los Angeles.json
+        if not os.path.exists(path):
+            os.mkdir(path)
+        with open(os.path.join(path, title + "_" + l + ".json"), "w") as file:
+            json.dump(final_data, file)
+    else:
+        # If it was cancelled, clean up or log a message
+        print(f"Scraping was cancelled, no file will be created for {title} in {location}")
 
 
-async def scraper_main(title, location):
+async def scraper_main(title, location, cancellation_signal: CancellationSignal ):
+    
+
     # 创建logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)  # set log level
@@ -177,7 +200,8 @@ async def scraper_main(title, location):
     #     data = json.load(file)
     # title = data["title"]
     # location = data["location"]
-    
+
+    # cancellation_signal = CancellationSignal()  # Create an instance of CancellationSignal
 
     for t in title:
         location_length = len(location)
@@ -201,7 +225,7 @@ async def scraper_main(title, location):
                         continue
 
                     try:
-                        tasks.append(browserAndScrape(browser, t, location, path, thread))
+                        tasks.append(browserAndScrape(browser, t, location, path, thread, cancellation_signal))
                     except:
                         logger.error("Couldn't process browserAndScrape function")
                 await asyncio.gather(*tasks)

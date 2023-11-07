@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, jsonify, send_file, abort, request
 import asyncio
 from scrape.scraper import scraper_main
@@ -5,30 +6,77 @@ from flask_cors import CORS
 import os
 from datetime import datetime
 
+from scrape.scraper import scraper_main
+from scrape.cancellation_signal import CancellationSignal
+from threading import Thread
+
+from flask_socketio import SocketIO
+
+
 
 app = Flask(__name__)
 CORS(app)
 
+# Flask-SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*")  # Configure CORS as needed for your client
+
+# Shared state
+scraper_thread = None
+cancellation_signal = CancellationSignal()
+scrape_status = {'is_scraping': True, 'is_complete': False}
+
+
+@app.route('/stop_scrape', methods=['POST'])
+def stop_scrape():
+    print("you hit the stop scraper button")
+    global cancellation_signal
+    if cancellation_signal:
+        cancellation_signal.set_cancelled()
+        return jsonify({"status": "Cancellation signal sent"}), 200
+    else:
+        return jsonify({"status": "No scrape task to cancel"}), 404
+
+
+def run_scraper_in_thread(title, location, cancellation_signal):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(scraper_main(title, location, cancellation_signal))
+    finally:
+        # After scraping is done, set the status to complete
+        scrape_status['is_scraping'] = False
+        scrape_status['is_complete'] = True
+        
+        loop.close()
+        # Notify frontend that scraping is complete
+        socketio.emit('scrape_complete', {'status': 'complete'})
 
 @app.route('/start_scrape', methods=['POST'])
 def start_scrape():
-    try:
-        # Extract title and location from the JSON data in the request
-        data = request.json
-        title = data['title']
-        location = data['location']
-        print(f"title: {title}, location: {location}")
-        
-        # Run the scraper function asynchronously and wait for it to complete
-        asyncio.run(scraper_main(title=[title], location=[location]))
-        
-        # If the scraping is successful, send a success response
-        return jsonify(status="Scraping started"), 200
-    
-    except Exception as e:
-        # If an error occurs, print the error and send a failure response
-        print(f"An error occurred: {e}")
-        return jsonify(status="Scraping failed", error=str(e)), 500
+    global scraper_thread, cancellation_signal, scrape_status
+
+
+    if scraper_thread is not None and scraper_thread.is_alive():
+        return jsonify(status="Scraping already in progress"), 409
+    # Set the scraping status when a new scrape starts
+    scrape_status['is_scraping'] = True
+    scrape_status['is_complete'] = False
+
+    data = request.json
+    title = data['title']
+    location = data['location']
+    print(f"title: {title}, location: {location}")
+
+    cancellation_signal = CancellationSignal()  # Reset cancellation signal
+
+    # Run the scraper in a separate thread
+    scraper_thread = Thread(
+        target=run_scraper_in_thread,
+        args=([title], [location], cancellation_signal)
+    )
+    scraper_thread.start()
+
+    return jsonify(status="Scraping started"), 200
     
 
 # Route to list all subdirectories within the 'data' directory
@@ -82,7 +130,7 @@ def get_all_data():
             files = [f for f in os.listdir(folder_path) if f.endswith('.json')]
             all_data.append({'date': folder, 'files': files})
 
-    print(all_data)
+    # print(all_data)
 
     return jsonify(all_data)
 
