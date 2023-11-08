@@ -5,23 +5,25 @@ import React, { useState, useEffect } from "react";
 import handleFileDelete from "@/components/AdminViewForScraperInfo/userDeleteFile"; // Update the path as necessary
 import styles from "./AdminViewForScraperInfo.module.scss"; // Make sure the path is correct
 
-
 import Link from "next/link";
 
-
-
+import { useAtom } from "jotai";
+import { selectedFileNameAtom, selectedDateAtom } from "@/lib/store.js";
 
 const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
   //const [folders, setFolders] = useState([]);
   const [dataFolders, setDataFolders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const handleFileClick = (fileName) => {
-    // const searchParams = useSearchParams()
-    console.log(fileName)
-  };
-  
 
+  const [selectedFileName, setSelectedFileName] = useAtom(selectedFileNameAtom);
+  const [selectedDate, setSelectedDate] = useAtom(selectedDateAtom);
+
+  const handleFileClick = (fileName, date) => {
+    setSelectedFileName(fileName);
+    setSelectedDate(date);
+    // console.log(`File selected: ${fileName}`);
+    // console.log(`Date selected: ${date}`);
+  };
 
   useEffect(() => {
     if (!isNewSearchLoaded) {
@@ -30,7 +32,6 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
   }, [isNewSearchLoaded]); // Runs every time isLoading changes
 
   useEffect(() => {
-    
     fetchDataFolders();
   }, []);
   const fetchDataFolders = async () => {
@@ -39,12 +40,23 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
       const data = await response.json();
       //setFolders(data);
       setDataFolders(data);
+      
+      if (!selectedFileName && !selectedDate && data.length > 0) {
+        const latestDataFolder = data[0];
+        if (latestDataFolder.files.length > 0) {
+          const latestFile = latestDataFolder.files[0]; // Get the latest file
+          setSelectedFileName(latestFile); // Set the latest file name in the atom
+          setSelectedDate(latestDataFolder.date); // Set the latest date in the atom
+        }
+      }
     } catch (error) {
       console.error("There was an error fetching the folder data:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -63,7 +75,7 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
                 {dataFolder.files.map((file, fileIndex) => (
                   <li key={fileIndex}>
                     <div className={styles.fileItem}>
-                    <Link
+                      {/* <Link
                           className={styles.fileLink}
                           href={{pathname: '/about',
                           query: {
@@ -76,7 +88,15 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
                           tabIndex={0} // for accessibility purposes
                         >
                           {file}
-                        </Link>
+                        </Link> */}
+                      <Link
+                        onClick={() => handleFileClick(file, dataFolder.date)}
+                        className={styles.fileLink}
+                        href={"/about"}
+                        role="button"
+                      >
+                        {file}
+                      </Link>
 
                       <button
                         size="icon"
@@ -116,8 +136,6 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
             </div>
           )
       )}
-
-
     </div>
   );
 };

@@ -1,0 +1,68 @@
+// FileDetailView.module.scss
+.fileDetailView {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+  
+    .title {
+      text-align: center;
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+  
+    .jobList {
+      list-style: none;
+      padding: 0;
+  
+      .jobItem {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        padding: 1.5rem;
+        transition: transform 0.2s;
+  
+        &:hover {
+          transform: translateY(-5px);
+        }
+  
+        .jobTitle {
+          font-size: 1.5rem;
+          color: #0275d8;
+          margin-bottom: 0.5rem;
+        }
+  
+        .jobInfo {
+          color: #666;
+          line-height: 1.6;
+          margin-bottom: 0.5rem;
+  
+          .jobLink {
+            color: #0275d8;
+            text-decoration: none;
+  
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+    }
+  
+    // Responsive design
+    @media screen and (max-width: 768px) {
+      .title {
+        font-size: 1.5rem;
+      }
+  
+      .jobList .jobItem {
+        padding: 1rem;
+      }
+  
+      .jobList .jobItem .jobTitle {
+        font-size: 1.25rem;
+      }
+    }
+  }
+  

@@ -1,6 +1,6 @@
 
 
-import {FileDetailView} from "@/components/AdminViewForScraperInfo/FileDetailView"
+import {FileDetailView} from "@/components/FileDetailView/FileDetailView"
 
 
 export const metadata = {

@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "jotai": "^2.5.1",
+    "nanoid": "^5.0.3",
     "next": "14.0.1",
     "react": "^18",
     "react-dom": "^18",
