@@ -8,7 +8,7 @@ import styles from "./AdminViewForScraperInfo.module.scss"; // Make sure the pat
 import Link from "next/link";
 
 import { useAtom } from "jotai";
-import { selectedFileNameAtom, selectedDateAtom } from "@/lib/store.js";
+import { selectedFileNameAtom, selectedDateAtom, jobClickedAtom} from "@/lib/store.js";
 
 const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
   //const [folders, setFolders] = useState([]);
@@ -17,10 +17,13 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
 
   const [selectedFileName, setSelectedFileName] = useAtom(selectedFileNameAtom);
   const [selectedDate, setSelectedDate] = useAtom(selectedDateAtom);
+  const [jobClicked, setJobClicked] = useAtom(jobClickedAtom); // Use the new atom
 
   const handleFileClick = (fileName, date) => {
     setSelectedFileName(fileName);
     setSelectedDate(date);
+    setJobClicked(true); // Update the state to indicate that a job has been clicked
+
     // console.log(`File selected: ${fileName}`);
     // console.log(`Date selected: ${date}`);
   };
@@ -31,18 +34,21 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
     }
   }, [isNewSearchLoaded]); // Runs every time isLoading changes
 
-  useEffect(() => {
-    fetchDataFolders();
-  }, []);
-  const fetchDataFolders = async () => {
+  // useEffect(() => {
+  //   fetchDataFolders();
+  // }, []);
+ const fetchDataFolders = async () => {
     try {
       const response = await fetch("http://127.0.0.1:5000/all-data");
       const data = await response.json();
       //setFolders(data);
       setDataFolders(data);
       
-      if (!selectedFileName && !selectedDate && data.length > 0) {
-        const latestDataFolder = data[0];
+      if (!jobClicked && data.length > 0) {
+        // Find the first dataFolder with files
+        const latestDataFolder = data.find(df => df.files.length > 0);
+
+        //const latestDataFolder = data[0];
         if (latestDataFolder.files.length > 0) {
           const latestFile = latestDataFolder.files[0]; // Get the latest file
           setSelectedFileName(latestFile); // Set the latest file name in the atom
@@ -106,7 +112,8 @@ const AdminViewForScraperInfo = ({ isNewSearchLoaded }) => {
                             dataFolder.date,
                             file,
                             dataFolders,
-                            setDataFolders
+                            setDataFolders,
+                            fetchDataFolders
                           )
                         }
                         className={`delete-button ${styles.deleteButton}`} // Update this line

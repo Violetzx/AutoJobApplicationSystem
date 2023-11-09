@@ -12,9 +12,13 @@ from threading import Thread
 
 from flask_socketio import SocketIO
 
+from package.utils import clear_directory, get_cover_letter_filename
 
+
+from auto_fill.cover_letter_api import cover_letter_blueprint
 
 app = Flask(__name__)
+app.register_blueprint(cover_letter_blueprint, url_prefix='/api')
 CORS(app)
 
 # Flask-SocketIO
@@ -65,6 +69,9 @@ def start_scrape():
     data = request.json
     title = data['title']
     location = data['location']
+    # Split the titles and locations by commas and create lists, stripping whitespace
+    title = [title.strip() for title in data['title'].split(',')]
+    location = [location.strip() for location in data['location'].split(',')]
     print(f"title: {title}, location: {location}")
 
     cancellation_signal = CancellationSignal()  # Reset cancellation signal
@@ -72,7 +79,7 @@ def start_scrape():
     # Run the scraper in a separate thread
     scraper_thread = Thread(
         target=run_scraper_in_thread,
-        args=([title], [location], cancellation_signal)
+        args=(title, location, cancellation_signal)
     )
     scraper_thread.start()
 
@@ -184,6 +191,40 @@ def get_file(date, filename):
         # Handle exceptions that could be raised when sending the file
         abort(500, description=str(e))
 
+
+
+
+
+
+
+@app.route('/upload_cover_letter', methods=['POST'])
+def upload_cover_letter():
+    upload_folder = './auto_fill/cover_letter'
+
+    if 'coverLetter' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['coverLetter']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file:
+        # 清空上传文件夹
+        clear_directory(upload_folder)
+        filename = file.filename
+        # 保存新的 cover letter 文件
+        file.save(os.path.join(upload_folder, filename))
+        return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 200
+
+    return jsonify({'error': 'File extension not allowed'}), 400
+
+
+@app.route('/get-cover-letter-name', methods=['GET'])
+def get_cover_letter_name():
+    directory = './auto_fill/cover_letter'
+    cover_letter_filename = get_cover_letter_filename(directory)
+    if cover_letter_filename:
+        return jsonify({'filename': cover_letter_filename})
+    else:
+        return jsonify({'error': 'No cover letter found'}), 404
 
 
 if __name__ == "__main__":

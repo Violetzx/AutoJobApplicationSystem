@@ -1,4 +1,4 @@
-const handleFileDelete = async (folderDate, fileName, dataFolders, setDataFolders) => {
+const handleFileDelete = async (folderDate, fileName, dataFolders, setDataFolders, fetchDataFolders) => {
     try {
       // Call Flask API to delete the file
       const response = await fetch(`http://127.0.0.1:5000/delete-data/${folderDate}/${fileName}`, {
@@ -25,6 +25,8 @@ const handleFileDelete = async (folderDate, fileName, dataFolders, setDataFolder
     } catch (error) {
       console.error("There was an error deleting the file:", error);
       // Optionally, display a message to the user
+    }finally{
+      fetchDataFolders()
     }
   };
   

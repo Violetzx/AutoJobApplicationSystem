@@ -20,7 +20,7 @@ async def create_directory(path):
     except FileNotFoundError as e:
         print(f"An error occurred while creating directory: {e}")
 
-async def browserAndScrape(browser, title: str, location: str, path: str, thread: int,cancellation_signal: CancellationSignal ):
+async def browserAndScrape(browser, title: str, location: str, path: str,cancellation_signal: CancellationSignal ):
     """
     Scrape data from Google Jobs website with search query
     Args:
@@ -33,7 +33,7 @@ async def browserAndScrape(browser, title: str, location: str, path: str, thread
     """
     count = 5
     jobs = []
-    l = location[thread]
+    l = location
     search_url = "https://www.google.com/search"
     search_params = {
         # query例子："software development in Los Angeles"
@@ -203,33 +203,42 @@ async def scraper_main(title, location, cancellation_signal: CancellationSignal 
 
     # cancellation_signal = CancellationSignal()  # Create an instance of CancellationSignal
 
-    for t in title:
-        location_length = len(location)
-        # 此代码支持multi-thread,但google有单位时间内访问次数限制，所以在生产中thread_number保持1
-        thread_number = 1
-        length_of_thread = location_length // thread_number
-        for location_index in tqdm(range(length_of_thread)):
-            # path = os.path.join("../../data", d)
-            # Inside your scraper function
-            path = os.path.join(os.getcwd(), '../data', d)
+    # title = ["Civilization", "python coop", "python intern"]
+    # location = ["New York", "Toronto", "Shanghai"]
 
-            tasks = list()
-            async with async_playwright() as pw:
-                browser = await pw.chromium.launch(channel="chrome", headless=True)
-                for thread in range(
-                    location_length // length_of_thread * location_index,
-                    location_length // length_of_thread * (location_index + 1),
-                ):
-                    l = location[thread]
-                    if os.path.exists(os.path.join(path, t + "_" + l + ".json")):
-                        continue
+    # Choose the number of concurrent tasks you want to run
+    # max_concurrent_tasks = len(title) * len(location)  # You can adjust this based on your environment and needs
+    max_concurrent_tasks = 4
+    tasks = []  # This will hold all the tasks we want to run concurrently
+    path = os.path.join("../data", d)
+    pbar = tqdm(total=len(title) * len(location))  # initialize tqdm progress bar with the total number of tasks
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(channel="chrome", headless=False)
+        
+        # Instead of nesting for-loops, schedule all the scraping jobs at once
+        for t in title:
+            for l in location:
+                if os.path.exists(os.path.join(path, f"{t}_{l}.json")):
+                    pbar.update(1)  # Update the progress bar immediately if the task is already done
+                    continue
+                # Schedule the scraping task for each title-location combination
+                tasks.append(browserAndScrape(browser, t, l, path, cancellation_signal))
+                
+                # If we've reached our concurrency limit, wait for all scheduled tasks to complete
+                if len(tasks) >= max_concurrent_tasks:
+                    await asyncio.gather(*tasks)
+                    tasks = []  # Reset the task list
+                    pbar.update(max_concurrent_tasks)  # Update progress bar
 
-                    try:
-                        tasks.append(browserAndScrape(browser, t, location, path, thread, cancellation_signal))
-                    except:
-                        logger.error("Couldn't process browserAndScrape function")
-                await asyncio.gather(*tasks)
-                await browser.close()
+
+        # If there are any remaining tasks not yet awaited, do so now
+        if tasks:
+            await asyncio.gather(*tasks)
+            pbar.update(len(tasks))  # Update progress bar
+        
+        await browser.close()
+
+
 
 
 
