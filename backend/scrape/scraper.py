@@ -213,7 +213,7 @@ async def scraper_main(title, location, cancellation_signal: CancellationSignal 
     path = os.path.join("../data", d)
     pbar = tqdm(total=len(title) * len(location))  # initialize tqdm progress bar with the total number of tasks
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(channel="chrome", headless=False)
+        browser = await pw.chromium.launch(channel="chrome", headless=True)
         
         # Instead of nesting for-loops, schedule all the scraping jobs at once
         for t in title:

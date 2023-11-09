@@ -136,6 +136,20 @@ export const FileDetailView = () => {
     }
   };
 
+
+  function getDaysAgo(timeString) {
+    const match = timeString.match(/(\d+)\s+days? ago/);
+    return match ? parseInt(match[1], 10) : null;
+  }  
+  const isWithin15DaysOrNone = (timeString) => {
+    if (timeString === "none") {
+      return true;
+    }
+    const daysAgo = getDaysAgo(timeString);
+    return daysAgo !== null && daysAgo <= 15;
+  };
+
+
   return (
     <div className={styles.fileDetailView}>
       <h1 className={styles.title}>{fileDisplay}</h1>
@@ -154,7 +168,8 @@ export const FileDetailView = () => {
       {/* Rest of your component */}
 
       <ul className={styles.jobList}>
-        {jobs.map((job, index) => (
+        {jobs
+    .filter((job) => isWithin15DaysOrNone(job.time)).map((job, index) => (
           <div key={nanoid()}>
             <li className={styles.jobItem}>
               <div className={styles.jobAndBtn}>
@@ -164,6 +179,7 @@ export const FileDetailView = () => {
                     <p className={styles.jobInfo}>Company: {job.company}</p>
                     <p className={styles.jobInfo}>Location: {job.location}</p>
                     <p className={styles.jobInfo}>Type: {job.type}</p>
+                    <p className={styles.jobInfo}>Upload time: {job.time}</p>
                     {/* If job.description exists, render it */}
                     {/* {job.description && <p className={styles.jobInfo}>Description: {job.description}</p>} */}
                   </div>
