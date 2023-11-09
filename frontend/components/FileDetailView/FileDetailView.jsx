@@ -110,19 +110,22 @@ export const FileDetailView = () => {
       currentDate.getMonth() + 1
     }/${currentDate.getDate()}/${currentDate.getFullYear()}`;
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/modify-cover-letter", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          company: job.company,
-          city: job.location, // Assuming job.location contains the city
-          title: job.title,
-          via: job.via, // Example source
-          date: formattedDate, // Example date
-        }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/modify-cover-letter",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            company: job.company,
+            city: job.location, // Assuming job.location contains the city
+            title: job.title,
+            via: job.via, // Example source
+            date: formattedDate, // Example date
+          }),
+        }
+      );
 
       const result = await response.json();
       if (response.ok) {
@@ -136,19 +139,34 @@ export const FileDetailView = () => {
     }
   };
 
+  function getTimeValue(timeString) {
+    const daysMatch = timeString.match(/(\d+)\s+days? ago/);
+    const hoursMatch = timeString.match(/(\d+)\s+hours? ago/);
 
-  function getDaysAgo(timeString) {
-    const match = timeString.match(/(\d+)\s+days? ago/);
-    return match ? parseInt(match[1], 10) : null;
-  }  
+    if (daysMatch) {
+      return parseInt(daysMatch[1], 10) * 24; // Convert days to hours
+    } else if (hoursMatch) {
+      return parseInt(hoursMatch[1], 10);
+    } else if (timeString.toLowerCase() === "none") {
+      return Infinity;
+    } else {
+      return null; // or some default value
+    }
+  }
+
   const isWithin15DaysOrNone = (timeString) => {
-    if (timeString === "none") {
+    if (timeString.toLowerCase() === "none") {
       return true;
     }
-    const daysAgo = getDaysAgo(timeString);
-    return daysAgo !== null && daysAgo <= 15;
+    const timeValue = getTimeValue(timeString);
+    return timeValue !== null && timeValue <= 15 * 24; // Check within 15 days in hours
   };
-
+  // Add this sorting function before the return statement
+  const sortJobsByUploadTime = (jobA, jobB) => {
+    const timeValueA = getTimeValue(jobA.time);
+    const timeValueB = getTimeValue(jobB.time);
+    return timeValueA - timeValueB;
+  };
 
   return (
     <div className={styles.fileDetailView}>
@@ -169,53 +187,55 @@ export const FileDetailView = () => {
 
       <ul className={styles.jobList}>
         {jobs
-    .filter((job) => isWithin15DaysOrNone(job.time)).map((job, index) => (
-          <div key={nanoid()}>
-            <li className={styles.jobItem}>
-              <div className={styles.jobAndBtn}>
-                <div>
-                  <div className={styles.jobDetails}>
-                    <h2 className={styles.jobTitle}>{job.title}</h2>
-                    <p className={styles.jobInfo}>Company: {job.company}</p>
-                    <p className={styles.jobInfo}>Location: {job.location}</p>
-                    <p className={styles.jobInfo}>Type: {job.type}</p>
-                    <p className={styles.jobInfo}>Upload time: {job.time}</p>
-                    {/* If job.description exists, render it */}
-                    {/* {job.description && <p className={styles.jobInfo}>Description: {job.description}</p>} */}
+          .sort(sortJobsByUploadTime)
+          .filter((job) => isWithin15DaysOrNone(job.time))
+          .map((job, index) => (
+            <div key={nanoid()}>
+              <li className={styles.jobItem}>
+                <div className={styles.jobAndBtn}>
+                  <div>
+                    <div className={styles.jobDetails}>
+                      <h2 className={styles.jobTitle}>{job.title}</h2>
+                      <p className={styles.jobInfo}>Company: {job.company}</p>
+                      <p className={styles.jobInfo}>Location: {job.location}</p>
+                      <p className={styles.jobInfo}>Type: {job.type}</p>
+                      <p className={styles.jobInfo}>Upload time: {job.time}</p>
+                      {/* If job.description exists, render it */}
+                      {/* {job.description && <p className={styles.jobInfo}>Description: {job.description}</p>} */}
+                    </div>
+                    <div className={styles.applyLinks}>
+                      <span>Apply here: </span>
+                      {job.links &&
+                        job.links.map((link, linkIndex) => (
+                          <p key={nanoid()} className={styles.jobInfo}>
+                            <a
+                              href={link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.jobLink}
+                            >
+                              Link
+                            </a>
+                          </p>
+                        ))}
+                    </div>
                   </div>
-                  <div className={styles.applyLinks}>
-                    <span>Apply here: </span>
-                    {job.links &&
-                      job.links.map((link, linkIndex) => (
-                        <p key={nanoid()} className={styles.jobInfo}>
-                          <a
-                            href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.jobLink}
-                          >
-                            Link
-                          </a>
-                        </p>
-                      ))}
+                  {/* Additional job details can be added here */}
+                  <div>
+                    <button
+                      className={styles.editCoverLetterButton}
+                      onClick={() => {
+                        /* Call your API function here */
+                        handleEditCoverLetterClick(job);
+                      }}
+                    >
+                      Autofill Cover Letter
+                    </button>
                   </div>
                 </div>
-                {/* Additional job details can be added here */}
-                <div>
-                  <button
-                    className={styles.editCoverLetterButton}
-                    onClick={() => {
-                      /* Call your API function here */
-                      handleEditCoverLetterClick(job);
-                    }}
-                  >
-                    Autofill Cover Letter
-                  </button>
-                </div>
-              </div>
-            </li>
-          </div>
-        ))}
+              </li>
+            </div>
+          ))}
       </ul>
     </div>
   );
