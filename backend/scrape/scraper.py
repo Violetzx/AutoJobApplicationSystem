@@ -208,12 +208,12 @@ async def scraper_main(title, location, cancellation_signal: CancellationSignal 
 
     # Choose the number of concurrent tasks you want to run
     # max_concurrent_tasks = len(title) * len(location)  # You can adjust this based on your environment and needs
-    max_concurrent_tasks = 4
+    max_concurrent_tasks = 8
     tasks = []  # This will hold all the tasks we want to run concurrently
     path = os.path.join("../data", d)
     pbar = tqdm(total=len(title) * len(location))  # initialize tqdm progress bar with the total number of tasks
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(channel="chrome", headless=True)
+        browser = await pw.chromium.launch(channel="chrome", headless=False)
         
         # Instead of nesting for-loops, schedule all the scraping jobs at once
         for t in title:
